@@ -2,9 +2,12 @@ import { Capacitor, registerPlugin } from "@capacitor/core";
 
 export type RemapStatus = { enabled: boolean; running: boolean; learning: boolean; keycode: number };
 
+export type RemoteInfo = { ip: string; url: string; port: number; name: string; running: boolean; error: string };
+
 type TvLauncherPlugin = {
   open(o: { packages: string }): Promise<void>;
   openSettings(o: { action?: string | undefined }): Promise<void>;
+  remoteInfo(): Promise<RemoteInfo>;
   remapStatus(): Promise<RemapStatus>;
   startLearning(o: { packages: string }): Promise<void>;
   clearRemap(): Promise<void>;
@@ -29,6 +32,11 @@ export async function openSettings(action?: string) {
 export async function remapStatus(): Promise<RemapStatus | null> {
   if (!isNative()) return null;
   return TvLauncher.remapStatus();
+}
+
+export async function remoteInfo(): Promise<RemoteInfo | null> {
+  if (!isNative()) return null;
+  return TvLauncher.remoteInfo();
 }
 
 export const startLearning = () => TvLauncher.startLearning({ packages: YOUCINE_PACKAGES.join(",") });

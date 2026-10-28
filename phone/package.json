@@ -1,0 +1,6 @@
+{
+  "name": "tv-remote-app",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Controle da TV para o celular (mesma pagina servida pela TV)"
+}

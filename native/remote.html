@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0a0c12">
+<title>Controle da TV</title>
+<style>
+:root{
+  --bg:#0a0c12; --panel:#151a28; --panel2:#1d2436; --line:#293149;
+  --text:#e9edf7; --muted:#8d97b0; --amber:#f2b134; --teal:#43d6bd; --red:#f0625f;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Ubuntu,sans-serif}
+body{min-height:100vh;padding:max(14px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom));
+  display:flex;justify-content:center;user-select:none;-webkit-user-select:none}
+.wrap{width:100%;max-width:440px;display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:center;gap:10px}
+header .who{flex:1;min-width:0}
+header .kicker{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0}
+header .tv{font-size:20px;font-weight:700;margin:2px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:11px;height:11px;border-radius:50%;background:var(--muted);flex:none}
+.dot.on{background:var(--teal);box-shadow:0 0 12px rgba(67,214,189,.7)}
+.dot.off{background:var(--red);box-shadow:0 0 12px rgba(240,98,95,.6)}
+.banner{display:none;gap:10px;align-items:center;justify-content:space-between;
+  background:#2a1a1c;border:1px solid #4d2a2c;border-radius:14px;padding:11px 13px;font-size:14px;color:#ffd8d7}
+.banner.show{display:flex}
+.banner button{background:none;border:1px solid #6d3a3c;color:#ffd8d7;border-radius:9px;
+  padding:6px 11px;font-size:13px;font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:16px}
+.dpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:290px;margin:0 auto}
+.dpad .sp{visibility:hidden}
+button{all:unset;display:grid;place-items:center;cursor:pointer;touch-action:manipulation}
+.key{aspect-ratio:1;border-radius:18px;background:var(--panel2);border:1px solid var(--line);color:var(--text)}
+.key:active{background:#2b3450;transform:scale(.96)}
+.key svg{width:26px;height:26px}
+.key.ok{background:linear-gradient(160deg,#f6c14b,#d98f14);border-color:#f6c14b;color:#2a1c02}
+.key.ok svg{width:30px;height:30px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.wide{height:52px;border-radius:16px;background:var(--panel2);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;gap:9px;font-size:15px;font-weight:600}
+.wide:active{background:#2b3450}
+.wide svg{width:19px;height:19px}
+.sect{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#aab4cc;margin:0 0 10px}
+.media{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.media .key{aspect-ratio:auto;height:56px}
+.vol{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.vol .key{aspect-ratio:auto;height:56px}
+.apps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.app{height:74px;border-radius:16px;background:var(--panel2);border:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+  font-size:12px;font-weight:600;color:var(--text);text-align:center;padding:6px}
+.app:active{background:#2b3450}
+.app i{width:12px;height:12px;border-radius:4px;display:block}
+.hint{font-size:12px;color:var(--muted);line-height:1.5;text-align:center;margin:2px 0 0}
+.swap{display:block;margin:0 auto;background:none;border:none;color:var(--muted);
+  font-size:13px;text-decoration:underline;padding:6px 10px}
+/* conexao */
+#gate{display:none;flex-direction:column;gap:14px;justify-content:center;min-height:66vh;text-align:center}
+#gate.show{display:flex}
+#gate h1{font-size:26px;margin:0}
+#gate p{color:#a3adc4;font-size:14px;line-height:1.6;margin:0}
+#gate input{width:100%;padding:16px;border-radius:16px;background:var(--panel);border:1px solid var(--line);
+  color:var(--text);font-size:17px;text-align:center;letter-spacing:.02em}
+#gate input::placeholder{color:#727d97}
+#gate .go{height:56px;border-radius:16px;background:linear-gradient(160deg,#f6c14b,#d98f14);
+  color:#2a1c02;font-size:17px;font-weight:700;display:grid;place-items:center}
+#gate .go:active{transform:scale(.98)}
+#gate .bad{color:#ffb3b1;font-size:14px;min-height:20px}
+#pad{display:none;flex-direction:column;gap:14px}
+#pad.show{display:flex}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="gate">
+    <h1>Controlar a TV</h1>
+    <p>Digite o endereço que está aparecendo na tela da TV.<br>Ele fica em <b>Configurações › Controle no celular</b>.</p>
+    <input id="addr" type="text" inputmode="url" placeholder="192.168.1.20:8355" autocomplete="off" spellcheck="false">
+    <div class="bad" id="bad"></div>
+    <button class="go" id="go">Procurar a TV</button>
+  </div>
+
+  <div id="pad">
+    <header>
+      <span class="dot" id="dot"></span>
+      <div class="who">
+        <p class="kicker">Controle remoto</p>
+        <p class="tv" id="tvname">TV</p>
+      </div>
+      <button class="swap" id="swap" style="display:none">trocar</button>
+    </header>
+
+    <div class="banner" id="banner"><span id="bmsg"></span><button id="bbtn">Tentar de novo</button></div>
+
+    <div class="panel">
+      <div class="dpad">
+        <span class="sp"></span>
+        <button class="key" data-key="19" aria-label="Cima"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button>
+        <span class="sp"></span>
+        <button class="key" data-key="21" aria-label="Esquerda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button class="key ok" data-key="23" aria-label="OK"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></button>
+        <button class="key" data-key="22" aria-label="Direita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+        <span class="sp"></span>
+        <button class="key" data-key="20" aria-label="Baixo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+        <span class="sp"></span>
+      </div>
+      <div class="row">
+        <button class="wide" id="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 19l-7-7 7-7"/><path d="M3 12h18"/></svg>Voltar</button>
+        <button class="wide" id="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Início</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <p class="sect">Reprodução</p>
+      <div class="media">
+        <button class="key" data-media="88" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3 6l9 6V6z"/></svg></button>
+        <button class="key" data-media="85" aria-label="Reproduzir ou pausar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+        <button class="key" data-media="87" aria-label="Próximo"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l9 6-9 6z"/></svg></button>
+      </div>
+      <p class="sect" style="margin-top:16px">Volume</p>
+      <div class="vol">
+        <button class="key" data-vol="down" aria-label="Diminuir volume"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+        <button class="key" data-vol="mute" aria-label="Mudo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg></button>
+        <button class="key" data-vol="up" aria-label="Aumentar volume"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <p class="sect">Abrir na TV</p>
+      <div class="apps">
+        <button class="app" data-pkg="com.youcine.app,com.youcine,com.youcine.tv,br.com.youcine"><i style="background:#8b5cf6"></i>YouCine</button>
+        <button class="app" data-pkg="com.google.android.youtube.tv,com.google.android.youtube"><i style="background:#ef4444"></i>YouTube</button>
+        <button class="app" data-pkg="com.netflix.ninja,com.netflix.mediaclient"><i style="background:#e50914"></i>Netflix</button>
+        <button class="app" data-pkg="com.google.android.tv,com.android.tv,com.google.android.apps.tv.launcherx"><i style="background:#38bdf8"></i>TV ao vivo</button>
+        <button class="app" data-settings="android.settings.SETTINGS"><i style="background:#94a3b8"></i>Ajustes</button>
+        <button class="app" data-key="82"><i style="background:#f2b134"></i>Menu</button>
+      </div>
+      <p class="hint">Setas, OK, Voltar e Início funcionam na tela inicial do TV Home.<br>Volume e reprodução funcionam em qualquer app.</p>
+    </div>
+  </div>
+
+</div>
+<script>
+(function () {
+  var PORT = 8355;
+  var qs = new URLSearchParams(location.search);
+  var inApp = !!window.Capacitor || location.hostname === 'localhost' || location.hostname === '';
+  var base = '';
+
+  function norm(v) {
+    v = (v || '').trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+    if (!v) return '';
+    var host = v.split('/')[0];
+    if (!/:\d+$/.test(host)) v = host + ':' + PORT + v.slice(host.length);
+    return 'http://' + v;
+  }
+
+  function post(payload) {
+    var c = new AbortController();
+    var to = setTimeout(function () { c.abort(); }, 4000);
+    return fetch(base + '/command', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: c.signal,
+      cache: 'no-store'
+    }).then(function (r) {
+      return r.json();
+    }).finally(function () { clearTimeout(to); });
+  }
+
+  var MSG = {
+    not_installed: 'Esse app não está instalado na TV.',
+    launcher_closed: 'Abra o TV Home na TV para usar as setas.',
+    unavailable: 'A TV não conseguiu abrir isso.',
+    bad_key: 'Comando inválido.',
+    no_action: 'Comando inválido.',
+    unknown_action: 'Comando inválido.',
+    failed: 'A TV não conseguiu executar.',
+    media: 'Esse app não responde aos controles de reprodução.',
+    volume: 'A TV não deixou mudar o volume.'
+  };
+
+  var banner = document.getElementById('banner');
+  var bmsg = document.getElementById('bmsg');
+  var dot = document.getElementById('dot');
+  var lastPayload = null;
+
+  function show(msg) {
+    bmsg.textContent = msg;
+    banner.classList.add('show');
+    dot.className = 'dot off';
+  }
+  function clear() {
+    banner.classList.remove('show');
+    dot.className = 'dot on';
+  }
+  document.getElementById('bbtn').addEventListener('click', function () {
+    if (lastPayload) send(lastPayload);
+  });
+
+  function send(p) {
+    lastPayload = p;
+    post(p).then(function (r) {
+      if (r && r.ok) clear();
+      else show((r && MSG[r.error]) || 'A TV não respondeu. Tente de novo.');
+    }).catch(function () {
+      show('TV fora do ar ou celular fora do Wi-Fi.');
+    });
+  }
+
+  function bindAll(sel, fn) {
+    Array.prototype.forEach.call(document.querySelectorAll(sel), function (el) {
+      el.addEventListener('click', function () { fn(el); });
+    });
+  }
+
+  bindAll('[data-key]', function (el) { send({ action: 'key', keycode: +el.getAttribute('data-key') }); });
+  bindAll('[data-media]', function (el) { send({ action: 'media', keycode: +el.getAttribute('data-media') }); });
+  bindAll('[data-vol]', function (el) { send({ action: 'volume', dir: el.getAttribute('data-vol') }); });
+  bindAll('[data-pkg]', function (el) { send({ action: 'open', packages: el.getAttribute('data-pkg') }); });
+  bindAll('[data-settings]', function (el) { send({ action: 'settings', setting: el.getAttribute('data-settings') }); });
+  document.getElementById('back').addEventListener('click', function () { send({ action: 'back' }); });
+  document.getElementById('home').addEventListener('click', function () { send({ action: 'home' }); });
+
+  function openRemote(name) {
+    document.getElementById('tvname').textContent = name || 'TV';
+    document.getElementById('gate').classList.remove('show');
+    document.getElementById('pad').classList.add('show');
+    document.getElementById('swap').style.display = inApp ? 'block' : 'none';
+    clear();
+  }
+
+  function probe(u) {
+    return fetch(u + '/info', { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { return j && j.ok ? j : null; });
+  }
+
+  function connect(u) {
+    return probe(u).then(function (j) {
+      if (!j) return null;
+      base = u;
+      try { localStorage.setItem('tvAddr', u); } catch (e) {}
+      openRemote(j.name);
+      return j;
+    }).catch(function () { return null; });
+  }
+
+  // 1) aberto pela propria TV: ja sabemos o endereco
+  if (!inApp && /^https?:$/.test(location.protocol)) {
+    base = location.origin;
+    probe(base).then(function (j) { openRemote(j && j.name); });
+    return;
+  }
+
+  // 2) app do celular: endereco vem do que o usuario digitou (ou do ?tv=)
+  var gate = document.getElementById('gate');
+  var bad = document.getElementById('bad');
+  var input = document.getElementById('addr');
+  gate.classList.add('show');
+
+  var preset = qs.get('tv') || '';
+  try { preset = preset || localStorage.getItem('tvAddr') || ''; } catch (e) {}
+  if (preset) {
+    input.value = norm(preset).replace(/^http:\/\//, '');
+    connect(norm(preset)).then(function (j) { if (!j) bad.textContent = 'TV não encontrada. Confira o endereço e o Wi-Fi.'; });
+  }
+
+  document.getElementById('go').addEventListener('click', function () {
+    var u = norm(input.value);
+    if (!u) { bad.textContent = 'Digite o endereço que está na tela da TV.'; return; }
+    bad.textContent = 'Procurando…';
+    connect(u).then(function (j) {
+      if (!j) bad.textContent = 'TV não encontrada. Confira o endereço e se o celular está no mesmo Wi-Fi.';
+    });
+  });
+  input.addEventListener('keydown', function (e) { if (e.key === 'Enter') document.getElementById('go').click(); });
+
+  document.getElementById('swap').addEventListener('click', function () {
+    try { localStorage.removeItem('tvAddr'); } catch (e) {}
+    base = '';
+    document.getElementById('pad').classList.remove('show');
+    gate.classList.add('show');
+    bad.textContent = '';
+  });
+})();
+</script>
+</body>
+</html>

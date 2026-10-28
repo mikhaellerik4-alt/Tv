@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Cast, Laptop, Play, Smartphone, Tv, Clapperboard, Settings, X } from "lucide-react";
 import { openApp, openSettings, YOUCINE_PACKAGES } from "@/lib/tv-launcher";
 import { RemapDialog } from "@/components/RemapDialog";
+import { RemotePairDialog } from "@/components/RemotePairDialog";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -28,7 +29,8 @@ type Tile = {
   hue: string;
   packages?: string[];
   settings?: string;
-  info?: "mirror" | "dex" | "remote";
+  info?: "mirror" | "dex";
+  pair?: boolean;
   homeSettings?: boolean;
 };
 
@@ -39,13 +41,13 @@ const TILES: Tile[] = [
   { name: "TV", icon: Tv, hue: "oklch(0.55 0.13 230)", packages: ["com.google.android.tv", "com.android.tv", "com.google.android.apps.tv.launcherx"] },
   { name: "Espelhar tela", icon: Cast, hue: "oklch(0.6 0.15 160)", info: "mirror" },
   { name: "Tela sem fio (DeX)", icon: Laptop, hue: "oklch(0.6 0.14 200)", info: "dex" },
-  { name: "Controle no celular", icon: Smartphone, hue: "oklch(0.7 0.15 75)", info: "remote" },
+  { name: "Controle no celular", icon: Smartphone, hue: "oklch(0.7 0.15 75)", pair: true },
   { name: "Configurações", icon: Settings, hue: "oklch(0.45 0.02 250)", homeSettings: true },
 ];
 
 type InfoEntry = { title: string; note?: string; steps: string[] };
 
-const INFO: Record<"mirror" | "dex" | "remote", InfoEntry> = {
+const INFO: Record<"mirror" | "dex", InfoEntry> = {
   mirror: {
     title: "Espelhar a tela do celular",
     steps: ["Conecte o celular no mesmo Wi‑Fi da TV.", "No celular, abra o painel rápido e toque em “Transmitir tela” / “Smart View”.", "Escolha o nome desta TV na lista."],
@@ -54,15 +56,6 @@ const INFO: Record<"mirror" | "dex" | "remote", InfoEntry> = {
     title: "Usar a TV como tela sem fio (DeX)",
     steps: ["No Samsung, abra o painel rápido e toque em “DeX”.", "Escolha esta TV (ela aparece como dispositivo de transmissão).", "Use o celular como touchpad ou conecte um teclado Bluetooth."],
   },
-  remote: {
-    title: "Controlar a TV pelo celular",
-    note: "O controle remoto é outro app, que só existe para o celular — nada é instalado nesta TV.",
-    steps: [
-      "No celular, instale o app “Google TV” (Play Store ou App Store).",
-      "Abra o app e toque no ícone de controle remoto.",
-      "Escolha esta TV na lista e digite o código que aparecer na tela da TV.",
-    ],
-  },
 };
 
 function Home() {
@@ -70,6 +63,7 @@ function Home() {
   const [info, setInfo] = useState<keyof typeof INFO | null>(null);
   const [menu, setMenu] = useState(false);
   const [remap, setRemap] = useState(false);
+  const [pair, setPair] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const COLS = 4;
@@ -98,6 +92,7 @@ function Home() {
 
   const launch = async (t: Tile) => {
     if (t.homeSettings) return setMenu(true);
+    if (t.pair) return setPair(true);
     if (t.info) return setInfo(t.info);
     try {
       if (t.packages) await openApp(t.packages);
@@ -180,6 +175,7 @@ function Home() {
       )}
 
       {remap && <RemapDialog onClose={() => setRemap(false)} />}
+      {pair && <RemotePairDialog onClose={() => setPair(false)} />}
 
       {info && (
         <div className="fixed inset-0 grid place-items-center bg-background/80 p-6 backdrop-blur">

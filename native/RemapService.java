@@ -11,16 +11,32 @@ import android.view.accessibility.AccessibilityEvent;
 public class RemapService extends AccessibilityService {
     static final String PREFS = "remap";
     static boolean running = false;
+    // Servico ativo: permite Voltar/Inicio em qualquer app, nao so na tela inicial.
+    public static RemapService instance = null;
 
     static SharedPreferences prefs(Context c) {
         return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 
     @Override
-    protected void onServiceConnected() { running = true; }
+    protected void onServiceConnected() {
+        running = true;
+        instance = this;
+    }
 
     @Override
-    public boolean onUnbind(Intent intent) { running = false; return super.onUnbind(intent); }
+    public boolean onUnbind(Intent intent) {
+        running = false;
+        instance = null;
+        return super.onUnbind(intent);
+    }
+
+    @Override
+    public void onDestroy() {
+        running = false;
+        instance = null;
+        super.onDestroy();
+    }
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {}

@@ -17,6 +17,40 @@ public class TvLauncherPlugin extends Plugin {
         return s != null && s.contains(getContext().getPackageName() + "/");
     }
 
+    // ---------- controle pelo celular ----------
+
+    @PluginMethod
+    public void remoteInfo(PluginCall call) {
+        com.getcapacitor.JSObject r = new com.getcapacitor.JSObject();
+        String ip = localIp();
+        r.put("ip", ip == null ? "" : ip);
+        r.put("url", ip == null ? "" : "http://" + ip + ":" + RemoteServer.PORT);
+        r.put("port", RemoteServer.PORT);
+        r.put("name", android.os.Build.MODEL);
+        r.put("running", RemoteServer.isRunning());
+        r.put("error", RemoteServer.lastError());
+        call.resolve(r);
+    }
+
+    private static String localIp() {
+        try {
+            java.util.Enumeration<java.net.NetworkInterface> ifs =
+                java.net.NetworkInterface.getNetworkInterfaces();
+            while (ifs.hasMoreElements()) {
+                java.net.NetworkInterface n = ifs.nextElement();
+                if (!n.isUp() || n.isLoopback() || n.isVirtual()) continue;
+                java.util.Enumeration<java.net.InetAddress> addrs = n.getInetAddresses();
+                while (addrs.hasMoreElements()) {
+                    java.net.InetAddress a = addrs.nextElement();
+                    if (a instanceof java.net.Inet4Address && a.isSiteLocalAddress()) {
+                        return a.getHostAddress();
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
     @PluginMethod
     public void remapStatus(PluginCall call) {
         android.content.SharedPreferences p = RemapService.prefs(getContext());
