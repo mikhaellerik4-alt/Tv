@@ -22,15 +22,18 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+      - name: Usar assinatura fixa
+        run: mkdir -p ~/.android && cp native/signing/debug.keystore ~/.android/debug.keystore
       - run: bun install
       - run: rm -rf android && bunx cap add android
       - name: Native launcher code
         run: |
           DIR=android/app/src/main/java/com/mikhaell/tvlauncher
           mkdir -p $DIR
-          cp native/TvLauncherPlugin.java native/MainActivity.java native/RemapService.java $DIR/
-          mkdir -p android/app/src/main/res/xml
+          cp native/TvLauncherPlugin.java native/MainActivity.java native/RemapService.java native/RemoteServer.java native/RemoteService.java $DIR/
+          mkdir -p android/app/src/main/res/xml android/app/src/main/assets
           cp native/remap_service.xml android/app/src/main/res/xml/
+          cp native/remote.html android/app/src/main/assets/
           sed -i 's#</resources>#    <string name="remap_description">Permite trocar a função de um botão do controle remoto (ex: Globoplay) para abrir o YouCine. Não lê nada do que aparece na tela.</string>\n</resources>#' android/app/src/main/res/values/strings.xml
           python3 native/patch_manifest.py android/app/src/main/AndroidManifest.xml
       - run: bunx cap sync android

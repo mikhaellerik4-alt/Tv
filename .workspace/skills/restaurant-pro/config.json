@@ -1,0 +1,13 @@
+{
+  "name": "restaurant-pro",
+  "version": "1.0.0",
+  "description": "Recursos avançados de gestão, BI e experiência do cliente para restaurantes.",
+  "category": "Business",
+  "triggers": [
+    "restaurante pro",
+    "rastreamento ao vivo",
+    "upsell inteligente",
+    "dashboard analítico",
+    "configurar whatsapp"
+  ]
+}

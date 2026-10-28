@@ -1,0 +1,12 @@
+{
+  "name": "order-simulator",
+  "version": "1.0.0",
+  "description": "Simula fluxos de pedidos E2E para sistemas de restaurante.",
+  "category": "Testing",
+  "triggers": [
+    "simular pedido",
+    "teste de sistema",
+    "fluxo de entrega",
+    "order simulation"
+  ]
+}
